@@ -6,8 +6,10 @@ package pkg409_server;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -21,6 +23,8 @@ import jdk.dynalink.linker.ConversionComparator;
  */
 public class MainFormServer extends javax.swing.JFrame {
 
+    ObjectOutputStream out;
+    ArrayList<String> s;
     Socket socket;
     /**
      * Creates new form MainFormServer
@@ -47,14 +51,27 @@ public class MainFormServer extends javax.swing.JFrame {
                 }
                 History.append("\n");
             }
-            int dich1 = Integer.parseInt(dich);
-            Dijkstra(matrix, dich1);
+            int nguon1 = Integer.parseInt(nguon);
+            Dijkstra(matrix, nguon1);
 
         } catch (IOException | ClassNotFoundException e) {
             History.append("Lỗi khi nhận dữ liệu từ client: " + e.getMessage() + "\n");
         }
     }
     
+    private void SendMessage(ArrayList<String> s)
+    {
+        try {
+        out = new ObjectOutputStream(socket.getOutputStream());
+        for (String string : s) {
+            out.writeObject(string); // Sử dụng writeObject để ghi đối tượng
+        }
+        out.writeObject("END"); // Gửi "END" như một đối tượng
+        out.flush(); // Đảm bảo dữ liệu được gửi ngay lập tức
+    } catch (IOException ex) {
+        Logger.getLogger(MainFormServer.class.getName()).log(Level.SEVERE, null, ex);
+    }
+    }
     private void Dijkstra(int [][] graph, int source)
     {
         int numVertices = graph.length;
@@ -96,12 +113,16 @@ public class MainFormServer extends javax.swing.JFrame {
         }
 
         // In kết quả khoảng cách từ nguồn đến tất cả các đỉnh và đường đi
+        ArrayList<String> results = new ArrayList<>();
         for (int i = 0; i < shortestDistances.length; i++) {
             if (i != source) {
                 String path = printPath(predecessors, i); // Gọi hàm để lấy đường đi
                 History.append(path + "\n");
+                results.add(path); // Thêm đường đi vào danh sách kết quả
+               // s.add(path);
             }
         }
+        SendMessage(results);
     }
     
     //Hàm tìm đỉnh kề gần nhất
